@@ -1,22 +1,26 @@
 import type {
-    CreatePlaylistArgs, FetchPlaylistsArgs,
-    PlaylistData,
-    PlaylistsResponse,
+    CreatePlaylistArgs,
+    FetchPlaylistsArgs,
     UpdatePlaylistArgs
 } from '@/features/playlists/api/playlistsApi.types.ts';
 import {baseApi} from '@/app/api/baseApi.ts';
 import type {Images} from '@/common/types';
+import {playlistCreateResponseSchema, playlistsResponseSchema} from '@/features/playlists/model/playlists.schemas.ts';
+import {imagesSchema} from '@/common/schemas';
+import {withZodCatch} from '@/common/utils';
 
 
 export const playlistsApi = baseApi.injectEndpoints({
     endpoints: (build) => ({
                                  //1й -что возвращает нам бэк 2й параметр - это наши аргументы, что мы передаем
-        fetchPlaylists: build.query<PlaylistsResponse, FetchPlaylistsArgs>({
-            query: (params) =>  ({ url: `playlists`, params }),
+        fetchPlaylists: build.query({
+            query: (params: FetchPlaylistsArgs) =>  ({ url: `playlists`, params }),
+            ...withZodCatch(playlistsResponseSchema),
             providesTags: ['Playlists']
         }),
-        createPlaylist: build.mutation<{ data: PlaylistData }, CreatePlaylistArgs>({
-            query: (body) => ({method: 'POST', url: 'playlists', body}),
+        createPlaylist: build.mutation({
+            query: (body: CreatePlaylistArgs) => ({method: 'POST', url: 'playlists', body}),
+            ...withZodCatch(playlistCreateResponseSchema),
             invalidatesTags: ['Playlists']
         }),
         deletePlaylist: build.mutation<void, string>({
@@ -70,7 +74,7 @@ export const playlistsApi = baseApi.injectEndpoints({
                 return ({method: 'POST', url: `playlists/${playlistId}/images/main`, body: formData})
 
             },
-            invalidatesTags: ['Playlists']
+            ...withZodCatch(imagesSchema),
         }),
         deletePlaylistCover: build.mutation<void, { playlistId: string }>({
             query: ({playlistId}) => ({method: 'DELETE', url: `playlists/${playlistId}/images/main`,}),
